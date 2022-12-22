@@ -1,6 +1,6 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
-From ARS.ARS Require Import TransitionSystem.
+From ARS.ARS Require Import TransitionSystem CTL.
 
 Section sec_rule_based_transition_system.
 
@@ -12,13 +12,6 @@ Record RewriteRule `{TransitionSystem} : Type :=
   quant : Type;
   lhs : quantified_set quant;
   rhs : quantified_element quant
-}.
-
-Record Claim `{TransitionSystem} : Type :=
-{
-  af_quant : Type;
-  af_lhs : quantified_set af_quant;
-  af_rhs : quantified_set af_quant;
 }.
 
 Context `{TransitionSystem}.
@@ -51,9 +44,6 @@ Definition transition_closed_to_rule_set
 Definition transition_included_in_rule_set
   `{Set_ RewriteRule RewriteRuleSet} (rs : RewriteRuleSet) : Prop :=
   forall a b, transition a b -> transition_from_rule_set rs a b.
-
-Definition AF_satisfies (c : Claim) : Prop :=
-  forall q : af_quant c, af_lhs c q ⊆ AF_ts (af_rhs c q).
 
 End sec_rule_based_transition_system.
 
