@@ -1,2 +1,2 @@
 # ars-in-coq
-Abstract Rewrite Systems specified in Coq
+Abstract Always-Finally Reachability specified in Coq

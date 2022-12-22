@@ -1,0 +1,6 @@
+(coq.theory
+ (name ARS)
+ (package coq-ars)
+ (synopsis "Coq formalization for abstract always-finally reachability"))
+
+(include_subdirs qualified)

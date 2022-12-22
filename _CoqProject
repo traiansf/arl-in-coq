@@ -1,0 +1,8 @@
+-Q theories/ARS ARS
+
+-arg -w -arg -future-coercion-class-field
+
+theories/ARS/Lib/Traces.v
+
+theories/ARS/ARS/TransitionSystem.v
+theories/ARS/ARS/RuleBasedTransitionSystem.v
