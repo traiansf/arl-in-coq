@@ -1,6 +1,22 @@
 From stdpp Require Import prelude.
 From Coq Require Import Program.Equality.
 
+Lemma last_cons {T} (a : T) trs d : List.last (a :: trs) d = List.last trs a.
+Proof.
+  destruct (decide (trs = [])); [by subst |].
+  apply app_removelast_last with (d := d) in n as ->.
+  cbn; rewrite !last_last.
+  by destruct (removelast trs).
+Qed.
+
+Lemma last_app {T} (tr1 tr2 : list T) d :
+  List.last (tr1 ++ tr2) d = List.last tr2 (List.last tr1 d).
+Proof.
+  revert d; induction tr1; [done |].
+  intros d; rewrite last_cons, <- IHtr1.
+  by unfold app; rewrite last_cons.
+Qed.
+
 (**
   Based on
 
@@ -162,6 +178,13 @@ CoInductive ForAllSuffixes (P : trace -> Prop) : trace -> Prop :=
 | Forall_delay : forall a tr, P (Tcons a tr) ->
     ForAllSuffixes P tr ->
     ForAllSuffixes P (Tcons a tr).
+
+Definition ForAllConsecutivePairs (R : relation A) : trace -> Prop :=
+  ForAllSuffixes
+    (fun tr => match tr with
+    | Tnil _ => True
+    | Tcons a tr' => R a (hd tr')
+    end).
 
 Lemma ForallSuffixes_proper_impl (P : trace -> Prop ) `(!Proper ((≡) ==> impl) P) :
   Proper ((≡) ==> impl) (ForAllSuffixes P).
@@ -446,3 +469,152 @@ Proof.
 Qed.
 
 End sec_trace_properties.
+
+Section sec_trace_prefix_properties.
+
+Context {A : Type}.
+
+Inductive ForAllSuffixesList (P : list A -> Prop) : list A -> Prop :=
+| fasl_nil : P [] -> ForAllSuffixesList P []
+| fasl_cons : forall a l, P (a :: l) ->
+    ForAllSuffixesList P l ->
+    ForAllSuffixesList P (a :: l).
+
+Definition ForAllConsecutivePairsList (R : relation A) : list A -> Prop :=
+  ForAllSuffixesList
+    (fun l => match l with
+    | a :: b :: l' => R a b
+    | _ => True
+    end).
+
+Lemma ForAllConsecutivePairsList_cons (R : relation A) :
+  forall (a1 a2 : A) tr,
+  ForAllConsecutivePairsList R (a1 :: a2 :: tr)
+    <->
+  R a1 a2 /\
+  ForAllConsecutivePairsList R (a2 :: tr).
+Proof.
+  intros; split; [by inversion 1; subst |].
+  by intros []; constructor.
+Qed.
+
+Lemma ForAllConsecutivePairsList_app (R : relation A) :
+  forall (a : A) tr1 tr2 (lst := List.last tr1 a),
+  ForAllConsecutivePairsList R ((a :: tr1) ++ tr2)
+    <->
+  ForAllConsecutivePairsList R (a :: tr1) /\
+  ForAllConsecutivePairsList R (lst :: tr2).
+Proof.
+  intros a tr1 tr2.
+  remember (a :: tr1) as atr1; revert a tr1 Heqatr1.
+  induction atr1; [by inversion 1 |].
+  inversion 1; subst; clear Heqatr1.
+  destruct tr1; [by split; [split; [repeat constructor |]| intros []] |].
+  specialize (IHatr1 _ _ eq_refl).
+  rewrite last_cons; cbn.
+  change ((a0 :: a :: tr1) ++ tr2) with (a0 :: a :: tr1 ++ tr2).
+  rewrite !ForAllConsecutivePairsList_cons.
+  change (a :: tr1 ++ tr2) with ((a :: tr1) ++ tr2).
+  rewrite IHatr1.
+  by split; [intros (? & ? & ?) | intros [[] ?]].
+Qed.
+
+Fixpoint trace_prefix (tr : @trace A) (n : nat) : list A :=
+  match n, tr with
+  | 0, _ => []
+  | _, Tnil a => [a]
+  | S n, Tcons a tr' => a :: trace_prefix tr' n
+  end.
+
+Lemma trace_prefix_cons a tr n : trace_prefix (Tcons a tr) (S n) = a :: trace_prefix tr n.
+Proof. done. Qed.
+
+Lemma trace_prefix_last tr n d :
+  List.last (trace_prefix tr (S n)) d = nth_keep_nil tr n.
+Proof.
+  revert tr d; induction n; [by destruct tr |].
+  intros [] d; [by rewrite nth_keep_nil_nil |].
+  rewrite trace_prefix_cons, nth_keep_nil_cons, last_cons.
+  by apply IHn.
+Qed.
+
+Fixpoint trace_prepend (trs : list A) (tr : @trace A) : @trace A :=
+  match trs with
+  | [] => tr
+  | a :: trs' => Tcons a (trace_prepend trs' tr)
+  end.
+
+Lemma removelast_cons {T} (a b : T) l :
+  removelast (a :: b :: l) = a :: removelast (b :: l).
+Proof. done. Qed.
+
+Lemma trace_prepend_cons a trs tr :
+  trace_prepend (a :: trs) tr = Tcons a (trace_prepend trs tr).
+Proof. done. Qed.
+
+Lemma forall_consecutive_pairs_trace_prefix (R : relation A) (tr : trace A) :
+  ForAllConsecutivePairs R tr
+    <->
+  forall n, ForAllConsecutivePairsList R (trace_prefix tr n). 
+Proof.
+  split.
+  - intros Hall n; revert tr Hall; induction n; [by constructor 1 |].
+    inversion 1; [by constructor; [| constructor] | ].
+    cbn; constructor; [| by apply IHn].
+    by destruct n, tr0.
+  - revert tr.
+    cofix Htr.
+    intros [|] Hpref; [by constructor|].
+    assert (Hpref0 := Hpref 2).
+    destruct t; inversion Hpref0; subst; [by constructor; [| constructor] |].
+    constructor; [done |].
+    apply Htr.
+    intro n.
+    specialize (Hpref (S n)).
+    by inversion Hpref; subst.
+Qed.
+
+Lemma forall_consecutive_pairs_trace_prepend (R : relation A) tr trs :
+  ForAllConsecutivePairs R tr ->
+  ForAllConsecutivePairsList R trs ->
+  List.last trs (hd tr) = hd tr ->
+  ForAllConsecutivePairs R (trace_prepend (removelast trs) tr).
+Proof.
+  intros Htr Htrs.
+  induction Htrs; [done |].
+  destruct l; [by intro; apply IHHtrs |].
+  intro Heq.
+  rewrite removelast_cons, trace_prepend_cons.
+  constructor; [| by apply IHHtrs].
+  by destruct l; [cbn in *; subst |].
+Qed.
+
+Lemma trace_prepend_finalT trs tr lst :
+  finalT tr lst <-> finalT (trace_prepend trs tr) lst.
+Proof.
+  induction trs; [done |].
+  rewrite IHtrs.
+  by split; [constructor | inversion 1].
+Qed.
+
+Lemma forall_consecutive_pairs_trace_prepend_prefix (R : relation A) tr tr' n :
+  ForAllConsecutivePairs R tr ->
+  ForAllConsecutivePairs R tr' ->
+  nth_keep_nil tr n = hd tr' ->
+  ForAllConsecutivePairs R (trace_prepend (removelast (trace_prefix tr (S n))) tr').
+Proof.
+  intros Htr Htr' Heq.
+  apply forall_consecutive_pairs_trace_prepend;
+    [done | | by rewrite trace_prefix_last].
+  by apply forall_consecutive_pairs_trace_prefix.
+Qed.
+
+Lemma trace_prepend_nth_tl_keep_nil trs tr :
+  nth_tl_keep_nil (trace_prepend trs tr) (length trs) = tr.
+Proof. by induction trs. Qed.
+
+Lemma trace_prepend_prefix trs tr :
+  trace_prefix (trace_prepend trs tr) (length trs) = trs.
+Proof.  by induction trs; [| cbn; rewrite IHtrs]. Qed.
+
+End sec_trace_prefix_properties.

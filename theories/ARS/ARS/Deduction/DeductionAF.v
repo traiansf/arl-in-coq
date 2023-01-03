@@ -1,56 +1,51 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
 From ARS Require Import Traces TransitionSystem CTL.
+From ARS Require Import DeductionRules.
 
 Section sec_transition_system_deduction_rules.
 
 Context `{TransitionSystem}.
 
-Lemma rule_of_consequence φ φ' ψ ψ' :
-  φ ⊆ φ' -> φ' ⊆ AF_ts ψ' -> ψ' ⊆ ψ ->
-  φ ⊆ AF_ts ψ.
+Definition AF_ts_claim (ϕ ψ : Ensemble idomain) : Prop :=
+  ϕ ⊆ AF_ts ψ.
+
+#[export] Instance AF_rule_of_consequence : RuleOfConsequence AF_ts_claim.
 Proof.
-  intros Hφ HAF Hψ.
+  intros φ' φ Hφ ψ' ψ Hψ HAF; unfold AF_ts_claim.
   do 2 (etransitivity; [done |]).
   by rewrite Hψ.
 Qed.
 
-Lemma rule_of_reflexivity φ : φ ⊆ AF_ts φ.
+#[export] Instance AF_rule_of_reflexivity : Reflexive AF_ts_claim.
 Proof.
-  intros a Ha tr <- _.
+  intros ϕ a Ha tr <- _.
   by constructor 1.
 Qed.
 
-Lemma rule_of_transitivity φ χ ψ :
-  φ ⊆ AF_ts χ ->
-  χ ⊆ AF_ts ψ ->
-  φ ⊆ AF_ts ψ.
+#[export] Instance AF_rule_of_transitivity : Transitive AF_ts_claim.
 Proof.
-  intros Hφ Hχ.
+  unfold AF_ts_claim; intros φ χ ψ Hφ Hχ.
   etransitivity; [done |].
   rewrite Hχ.
   by rewrite AF_ts_idempotent.
 Qed.
 
-Lemma rule_of_disjunction φ1 φ2 ψ :
-  φ1 ⊆ AF_ts ψ ->
-  φ2 ⊆ AF_ts ψ ->
-  φ1 ∪ φ2 ⊆ AF_ts ψ.
-Proof. by set_solver. Qed.
-
-Lemma rule_of_generalization `(φ : qspace -> Ensemble idomain) ψ :
-  (forall i, φ i ⊆ AF_ts ψ) ->
-  indexed_union φ ⊆ AF_ts ψ.
+#[export] Instance AF_rule_of_disjunction : RuleOfDisjunction AF_ts_claim.
 Proof.
-  intros Hall a; rewrite elem_of_indexed_union.
+  by intros φ1 φ2 ψ; unfold AF_ts_claim; set_solver.
+Qed.
+
+#[export] Instance AF_rule_of_generalization : RuleOfGeneralization AF_ts_claim.
+Proof.
+  intros ? φ ψ Hall a; rewrite elem_of_indexed_union.
   intros [i Hai].
   by eapply Hall.
 Qed.
 
-Lemma rule_of_simple_step φ : φ ⊆ reducible ->
-  φ ⊆ AF_ts (transition_image_functor φ).
+#[export] Instance AF_rule_of_all_paths_single_step : RuleOfAllPathsSingleStep AF_ts_claim.
 Proof.
-  intros Hred a Ha tr <- Htr.
+  intros ? Hred ** a Ha tr <- Htr.
   inversion Htr as [a Hirreducible| a tr' Ht _]; subst;
     [by unfold irreducible in Hirreducible; contradict Hirreducible; apply Hred |].
   apply Exists1_exists; exists 1.
@@ -60,28 +55,9 @@ Proof.
   by rewrite nth_keep_nil_0.
 Qed.
 
-Section sec_rule_of_induction.
-
-Definition restrictR (R : relation idomain) (X : Ensemble idomain) : relation idomain :=
-  fun a b => a ∈ X /\ b ∈ X /\ R a b.
-
-Context
-  `{qspace : Type} (* instances of quantifiers *)
-  (measure : qspace -> idomain)
-  (prec : relation idomain)
-  (Hwf : well_founded prec)
-  {index}
-  (φ : index -> qspace -> Ensemble idomain)
-  (ψ : index -> qspace -> Ensemble idomain)
-  (Hind : forall q0,
-    (forall q, prec (measure q) (measure q0) ->
-      forall i, φ i q ⊆ AF_ts (ψ i q)) ->
-    forall i, φ i q0 ⊆ AF_ts (ψ i q0))
-  .
-
-Lemma rule_of_induction :
-    forall i q, φ i q ⊆ AF_ts (ψ i q).
+#[export] Instance AF_rule_of_induction : RuleOfInduction AF_ts_claim.
 Proof.
+  intros ? **.
   pose (precQ := fun q1 q2 => prec (measure q1) (measure q2)).
   assert (HprecQ : well_founded precQ).
   {
@@ -94,6 +70,7 @@ Proof.
   by intros x0 Hx0; apply Hind_x.
 Qed.
 
-End sec_rule_of_induction.
+#[export] Instance AF_all_path_deduction : AllPathsAFDeduction AF_ts_claim.
+Proof. Qed.
 
 End sec_transition_system_deduction_rules.

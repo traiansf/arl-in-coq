@@ -28,6 +28,39 @@ Definition AF_ts (P : Ensemble idomain) (a : idomain) : Prop :=
   forall tr : trace idomain, hd tr = a -> complete_transition_chain tr ->
   Exists1 (fun b : idomain => b ∈ P) tr.
 
+(**
+  The set of elements for which there exists a complete transition chains
+  starting in them passing through an element in <<P>> (in a finite number
+  of transitions).
+  Note that this set only includes irreducible elements if they are in <<P>>.
+*)
+Definition EF_ts_alt (P : Ensemble idomain) (a : idomain) : Prop :=
+  exists tr : trace idomain, hd tr = a /\ complete_transition_chain tr /\
+  Exists1 (fun b : idomain => b ∈ P) tr.
+
+(** A simpler definition of exists-finally, using finite witnesses. *)
+Definition EF_ts (P : Ensemble idomain) (a : idomain) : Prop :=
+  exists l : list idomain, transition_sequence (a :: l) /\ List.last l a ∈ P.
+
+Lemma EF_ts_iff P : EF_ts_alt P ≡ EF_ts P.
+Proof.
+  intro a; split.
+  - intros (tr & Heq_a & Htr & Hex).
+    apply Exists1_exists in Hex as [n Hnth].
+    rewrite <- (trace_prefix_last tr n a) in Hnth.
+    destruct tr; subst; [ by exists []; repeat constructor |].
+    exists (trace_prefix tr n); split.
+    + by apply complete_transition_chain_prefix with (n := S n) in Htr.
+    + by erewrite <- last_cons.
+  - intros (ts & Hts & Hp).
+    destruct (transition_sequence_to_complete_transition_chain a ts Hts)
+      as (tr & Htr & Heqts).
+    exists tr; split_and!; [by destruct tr; inversion Heqts | done |].
+    apply Exists1_exists.
+    exists (length ts).
+    by rewrite <- trace_prefix_last with (d := a), Heqts, last_cons.
+Qed.
+
 End sec_CTL_defs.
 
 Section sec_CTL_properties.
@@ -62,6 +95,28 @@ Proof.
   apply Exists1_exists in Hn as [m Hm].
   apply Exists1_exists; eexists.
   by erewrite nth_keep_nil_twice.
+Qed.
+
+#[export] Instance EF_ts_proper_subseteq :
+  Proper ((⊆) ==> (⊆)) EF_ts.
+Proof.
+  intros A B Hincl a (ts & Hts & Hlst).
+  by eexists; split_and!; [..| apply Hincl].
+Qed.
+
+Lemma EF_ts_idempotent φ :
+  EF_ts (EF_ts φ)
+    ≡
+  EF_ts φ.
+Proof.
+  apply set_equiv_subseteq; split;
+    intros a (tr & Htr & Hlst).
+  - destruct Hlst as (tr' & Htr' & Hlst').
+    exists (tr ++ tr').
+    split; [| by rewrite last_app].
+    by apply ForAllConsecutivePairsList_app.
+  - eexists; split_and!; [done.. |].
+    by exists []; split; [repeat constructor |].
 Qed.
 
 End sec_CTL_properties.

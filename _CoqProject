@@ -7,6 +7,9 @@ theories/ARS/Lib/Traces.v
 theories/ARS/ARS/TransitionSystem.v
 theories/ARS/ARS/CTL.v
 theories/ARS/ARS/FixedPoints/FixedPointAF.v
+theories/ARS/ARS/FixedPoints/FixedPointEF.v
+theories/ARS/ARS/Deduction/DeductionRules.v
 theories/ARS/ARS/Deduction/DeductionAF.v
+theories/ARS/ARS/Deduction/DeductionEF.v
 theories/ARS/QARS/RuleBasedTransitionSystem.v
 theories/ARS/QARS/Deduction/QDeductionAF.v
