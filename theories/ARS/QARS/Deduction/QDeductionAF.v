@@ -15,6 +15,10 @@ Record Claim `{TransitionSystem} : Type := mk_claim
   quantified_claim :> QuantifiedClaim (claim_quant := claim_quant)
 }.
 
+Definition quant_relation `{TransitionSystem} (R : relation (Ensemble idomain))
+  (c : Claim) : Prop :=
+  forall q : claim_quant c, R (claim_lhs c q) (claim_rhs c q).
+
 Definition AF_rbts_claim `{TransitionSystem} (c : Claim) : Prop :=
   forall q : claim_quant c, AF_ts_claim (claim_lhs c q) (claim_rhs c q).
 
@@ -44,3 +48,21 @@ Class QuantRuleOfDisjunction `{TransitionSystem} (P : Claim -> Prop) :=
     let ϕ := fun x : q => ϕ1 x ∪ ϕ2 x in
     P {| claim_quant := q; quantified_claim := {| claim_lhs := ϕ; claim_rhs := ψ |} |}.
 
+Class QuantRuleOfGeneralization `{TransitionSystem} (P : Claim -> Prop) :=
+  quant_rule_of_generalization : forall q `(ϕ : index -> quantified_set q) (ψ : quantified_set q),
+    (forall i, P {| claim_quant := q; quantified_claim := {| claim_lhs := ϕ i; claim_rhs := ψ |} |}) ->
+    let ϕ' := fun x => indexed_union (fun i => ϕ i x) in
+    P {| claim_quant := q; quantified_claim := {| claim_lhs := ϕ'; claim_rhs := ψ |} |}.
+
+(*
+Class QuantRuleOfInduction `{TransitionSystem} (P : Claim -> Prop) :=
+  quant_rule_of_induction :
+    forall
+      {qspace : Type}
+      (prec : relation idomain)
+      (Hwf : well_founded prec)
+      {index}
+      (φ : index -> quantified_set qspace)
+      (ψ : index -> quantified_set qspace)
+      (Hind )
+*)
