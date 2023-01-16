@@ -1,58 +1,129 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
-From ARS.ARS Require Import TransitionSystem CTL.
+From ARS.ARS Require Import TransitionSystem.
+
+Definition Valuation `{TransitionSystem} (Name : Type) : Type := Name -> idomain.
 
 Section sec_rule_based_transition_system.
 
-Definition quantified_set `{TransitionSystem} (quant : Type) : Type := quant -> Ensemble idomain.
-Definition quantified_element `{TransitionSystem} (quant : Type) : Type := quant -> idomain.
+Context
+  `{TransitionSystem}
+  (NameSet : Type)
+  `{FinSet Name NameSet}.
 
-Record RewriteRule `{TransitionSystem} : Type :=
+Definition quantified_pattern : Type := Valuation Name -> Ensemble idomain.
+
+Definition quantified_term : Type := Valuation Name -> idomain.
+
+Definition quantified_term_to_pattern (t : quantified_term) : quantified_pattern :=
+  fun v => {[ t v ]}.
+
+#[global] Coercion quantified_term_to_pattern : quantified_term >-> quantified_pattern.
+
+Definition ars_predicate `(p : quantified_pattern) : Prop :=
+  forall v : Valuation Name, p v ≡ top idomain \/ p v ≡ ∅.
+
+Definition quantified_variable (x : Name) : quantified_term :=
+  fun v => v x.
+
+Record ARSVarsEq (vars : NameSet) (v1 v2 : Valuation Name) :=
 {
-  quant : Type;
-  lhs : quantified_set quant;
-  rhs : quantified_element quant
+  ars_vars_eq : forall x, x ∈ vars -> v1 x = v2 x
 }.
 
-Context `{TransitionSystem}.
+Lemma ARSVarsEqProper_subseteq : Proper ((⊆) --> (=) ==> (=) ==> (impl)) ARSVarsEq.
+Proof.
+  intros vars1 vars2 Hvars _v1 v1 -> _v2 v2 -> Hvars1.
+  constructor; intros x Hx.
+  by apply Hvars1, Hvars.
+Qed.
 
-Record TransitionFromRuleInstance (r : RewriteRule) (q : quant r) (a b : idomain) : Prop :=
+#[global] Instance ARSVarsEqProper : Proper ((≡) --> (=) ==> (=) ==> (iff)) ARSVarsEq.
+Proof.
+  intros vars1 vars2 Hvars _v1 v1 -> _v2 v2 ->.
+  apply set_equiv_subseteq in Hvars as [].
+  by split; apply ARSVarsEqProper_subseteq.
+Qed.
+
+Definition pattern_dependent_vars (p : quantified_pattern) (dependent_vars : NameSet) : Prop :=
+  forall (v1 v2 : Valuation Name), ARSVarsEq dependent_vars v1 v2 -> p v1 ≡ p v2.
+
+Record RewriteRule : Type :=
 {
-  a_in_lhs : a ∈ lhs r q;
-  b_is_rhs : b = rhs r q;
+  vars : NameSet;
+  lhs : quantified_term;
+  requires : quantified_pattern;
+  rhs : quantified_term;
+  ensures : quantified_pattern;
+  requires_predicate : ars_predicate requires;
+  ensures_predicate : ars_predicate ensures;
+  lhs_vars : pattern_dependent_vars lhs vars;
+  rhs_vars : pattern_dependent_vars rhs vars;
+  requires_vars : pattern_dependent_vars requires vars;
+  ensures_vars : pattern_dependent_vars ensures vars;
 }.
 
-Definition transition_closed_to_rule_instance (r : RewriteRule) (q : quant r) : Prop :=
-  forall a b, TransitionFromRuleInstance r q a b -> transition a b.
+Record TransitionFromRuleInstance (r : RewriteRule) (v : Valuation Name) (a b : idomain) : Prop :=
+{
+  a_is_lhs : a = lhs r v;
+  b_is_rhs : b = rhs r v;
+  requires_holds : a ∈ requires r v;
+  ensure_holds : b ∈ ensures r v;
+}.
+
+Definition transition_closed_to_rule_instance (r : RewriteRule) (v : Valuation Name) : Prop :=
+  forall a b, TransitionFromRuleInstance r v a b -> transition a b.
 
 Inductive TransitionFromRule (r : RewriteRule) (a b : idomain) : Prop :=
-| tfr : forall q : quant r, TransitionFromRuleInstance r q a b ->
+| tfr : forall v : Valuation Name, TransitionFromRuleInstance r v a b ->
   TransitionFromRule r a b.
 
 Definition transition_closed_to_rule (r : RewriteRule) : Prop :=
   forall a b, TransitionFromRule r a b -> transition a b.
 
-Definition transition_from_rule_set
-  `{Set_ RewriteRule RewriteRuleSet} (rs : RewriteRuleSet)
-  (a b : idomain) : Prop :=
-  set_Exists (fun r => TransitionFromRule r a b) rs.
+Context
+  `{Set_ RewriteRule RewriteRuleSet}.
 
-Definition transition_closed_to_rule_set
-  `{Set_ RewriteRule RewriteRuleSet} (rs : RewriteRuleSet) : Prop :=
+Definition transition_from_rule_set (rs : RewriteRuleSet) (a b : idomain) : Prop :=
+  set_Exists (fun r : RewriteRule => TransitionFromRule r a b) rs.
+
+Definition transition_closed_to_rule_set (rs : RewriteRuleSet) : Prop :=
   forall a b, transition_from_rule_set rs a b -> transition a b.
 
-Definition transition_included_in_rule_set
-  `{Set_ RewriteRule RewriteRuleSet} (rs : RewriteRuleSet) : Prop :=
+Definition transition_included_in_rule_set (rs : RewriteRuleSet) : Prop :=
   forall a b, transition a b -> transition_from_rule_set rs a b.
 
 End sec_rule_based_transition_system.
 
 Class RuleBasedTransitionSystem
-  `{TransitionSystem} `{Set_ RewriteRule RewriteRuleSet}
+  `{TransitionSystem} (NameSet : Type) `{FinSet Name NameSet}
+  `{Set_ (RewriteRule NameSet) RewriteRuleSet}
   (rs : RewriteRuleSet) :=
 {
-  rules_sound : transition_closed_to_rule_set rs;
-  rules_complete : transition_included_in_rule_set rs;
+  rules_sound : transition_closed_to_rule_set NameSet rs;
+  rules_complete : transition_included_in_rule_set NameSet rs;
 }.
 
-#[global] Hint Mode RuleBasedTransitionSystem - - - - - - - - - - ! : typeclass_instances.
+#[global] Hint Mode RuleBasedTransitionSystem - - - - - - - - - - - - - - - - - - - - - ! : typeclass_instances.
+
+Arguments vars {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope {H0} r : assert.
+
+Arguments lhs {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope {H0} r _ : assert.
+
+Arguments rhs {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope {H0} r _ : assert.
+
+Arguments requires {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope {H0} r _ _ : assert.
+
+Arguments ensures {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope {H0} r _ _ : assert.
+
+Arguments TransitionFromRuleInstance {idomain}%type_scope 
+  {H} {NameSet}%type_scope {Name}%type_scope {H0} r v a b : assert.
+
+Arguments TransitionFromRule {idomain}%type_scope 
+  {H} {NameSet}%type_scope {Name}%type_scope {H0} r 
+  a b.
