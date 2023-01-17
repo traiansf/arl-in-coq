@@ -1,2 +1,3 @@
-# ars-in-coq
-Abstract Always-Finally Reachability specified in Coq
+# arl-in-coq
+
+Abstract Reachability Logic specified in Coq
