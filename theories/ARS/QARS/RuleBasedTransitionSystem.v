@@ -50,17 +50,19 @@ Definition pattern_dependent_vars (p : quantified_pattern) (dependent_vars : Nam
 
 Record RewriteRule : Type :=
 {
-  vars : NameSet;
   lhs : quantified_term;
   requires : quantified_pattern;
   rhs : quantified_term;
   ensures : quantified_pattern;
+  vars : NameSet;
+  vars_lhs : NameSet;
+  vars_lhs_prop : vars_lhs ⊆ vars;
+  lhs_vars : pattern_dependent_vars lhs vars_lhs;
+  rhs_vars : pattern_dependent_vars rhs vars;
+  requires_vars : pattern_dependent_vars requires vars_lhs;
+  ensures_vars : pattern_dependent_vars ensures vars;
   requires_predicate : ars_predicate requires;
   ensures_predicate : ars_predicate ensures;
-  lhs_vars : pattern_dependent_vars lhs vars;
-  rhs_vars : pattern_dependent_vars rhs vars;
-  requires_vars : pattern_dependent_vars requires vars;
-  ensures_vars : pattern_dependent_vars ensures vars;
 }.
 
 Record TransitionFromRuleInstance (r : RewriteRule) (v : Valuation Name) (a b : idomain) : Prop :=
@@ -77,6 +79,10 @@ Definition transition_closed_to_rule_instance (r : RewriteRule) (v : Valuation N
 Inductive TransitionFromRule (r : RewriteRule) (a b : idomain) : Prop :=
 | tfr : forall v : Valuation Name, TransitionFromRuleInstance r v a b ->
   TransitionFromRule r a b.
+
+Definition transition_rule_consistency (r : RewriteRule) : Prop :=
+  forall v, lhs r v ∈ requires r v ->
+    exists b, TransitionFromRule r (lhs r v) b.
 
 Definition transition_closed_to_rule (r : RewriteRule) : Prop :=
   forall a b, TransitionFromRule r a b -> transition a b.
@@ -102,6 +108,7 @@ Class RuleBasedTransitionSystem
 {
   rules_sound : transition_closed_to_rule_set NameSet rs;
   rules_complete : transition_included_in_rule_set NameSet rs;
+  rules_consistent : set_Forall (transition_rule_consistency NameSet) rs;
 }.
 
 #[global] Hint Mode RuleBasedTransitionSystem - - - - - - - - - - - - - - - - - - - - - ! : typeclass_instances.
