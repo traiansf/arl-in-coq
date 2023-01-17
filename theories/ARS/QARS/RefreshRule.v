@@ -3,6 +3,72 @@ From Coq Require Import FunctionalExtensionality.
 From sets Require Import Ensemble.
 From ARS Require Import TransitionSystem RuleBasedTransitionSystem.
 
+Definition find_position `{EqDecision A} (l : list A) (a : A) : option nat :=
+  fst <$> list_find (fun x => x = a) l.
+
+Lemma find_position_Some `{EqDecision A} (l : list A) a n :
+  find_position l a = Some n -> l !! n = Some a.
+Proof.
+  unfold find_position; intro Hpos.
+  destruct list_find as [(_n, _a) |] eqn: Hlist_find_eq; [| by inversion Hlist_find_eq].
+  apply Some_inj in Hpos; subst n.
+  by apply list_find_Some in Hlist_find_eq as (? & -> & _).
+Qed.
+
+Lemma find_position_elem_of `{EqDecision A} (l : list A) a :
+  a ∈ l <-> is_Some (find_position l a).
+Proof.
+  split.
+  - intro Ha.
+    cut (is_Some (list_find (fun x => x = a) l)).
+    {
+      intros [(_a, n) H_a].
+      by exists _a; unfold find_position; rewrite H_a.
+    }
+    by eapply list_find_elem_of.
+  - intros [n Hn].
+    by apply find_position_Some, elem_of_list_lookup_2 in Hn.
+Qed.
+
+Lemma find_position_None `{EqDecision A} (l : list A) a :
+  find_position l a = None <-> a ∉ l.
+Proof.
+  rewrite find_position_elem_of.
+  by apply eq_None_not_Some.
+Qed.
+
+Definition find_positions `{EqDecision A} (l subl : list A) : list nat :=
+  omap (find_position l) subl.
+
+Lemma find_positions_elem_of `{EqDecision A} (l subl : list A) x :
+  subl ⊆ l ->
+  x ∈ subl ->
+  x ∈ l <-> exists i, i ∈ find_positions l subl /\ l !! i = Some x.
+Proof.
+  induction subl; [by inversion 2 |].
+  intros Hincl.
+  inversion 1; subst.
+  - rewrite find_position_elem_of; split.
+    + intros [i Hi]; exists i.
+      split; [| by apply find_position_Some].
+      unfold find_positions; rewrite elem_of_list_omap.
+      by exists a; split; [left |].
+    + intros (i & Hi & Hlookup).
+      apply find_position_elem_of, elem_of_list_lookup.
+      by eexists.
+  - rewrite IHsubl; [| by set_solver | done].
+    apply exist_proper; intro i.
+    unfold find_positions; rewrite !elem_of_list_omap.
+    split; intros [(_x & H_x & Hpos) Hi]; (split; [| done]); exists _x; (split; [| done]).
+    + by right.
+    + apply find_position_Some in Hpos.
+      rewrite Hpos in Hi.
+      by congruence.
+Qed.
+
+Definition multiple_lookups `(l : list A) (positions : list nat) : list A :=
+  omap (fun i => lookup i l) positions.
+
 Section sec_refresh_rule.
 
 Context
@@ -241,8 +307,11 @@ Context `{Infinite Name}.
 Program Definition rewrite_rule_refresh_vars (r : RewriteRule NameSet) (avoid : NameSet) : RewriteRule NameSet :=
   let vars_list := elements (vars r) in
   let fresh_vars := fresh_list (length vars_list) (avoid ∪ vars r) in
+  let vars_lhs_positions := find_positions vars_list (elements (vars_lhs r)) in
+  let fresh_vars_lhs := multiple_lookups fresh_vars vars_lhs_positions in
   {|
     vars := list_to_set fresh_vars;
+    vars_lhs := list_to_set fresh_vars_lhs;
     lhs := qterm_rename_vars_with (lhs r) vars_list fresh_vars;
     requires := qpattern_rename_vars_with (requires r) vars_list fresh_vars;
     rhs := qterm_rename_vars_with (rhs r) vars_list fresh_vars;

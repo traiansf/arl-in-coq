@@ -113,24 +113,27 @@ Class RuleBasedTransitionSystem
 
 #[global] Hint Mode RuleBasedTransitionSystem - - - - - - - - - - - - - - - - - - - - - ! : typeclass_instances.
 
-Arguments vars {idomain}%type_scope {H} {NameSet}%type_scope 
+Arguments vars {idomain}%type_scope {H} {NameSet}%type_scope
   {Name}%type_scope {H0} r : assert.
 
-Arguments lhs {idomain}%type_scope {H} {NameSet}%type_scope 
+Arguments vars_lhs {idomain}%type_scope {H} {NameSet}%type_scope
+  {Name}%type_scope {H0} r : assert.
+
+Arguments lhs {idomain}%type_scope {H} {NameSet}%type_scope
   {Name}%type_scope {H0} r _ : assert.
 
-Arguments rhs {idomain}%type_scope {H} {NameSet}%type_scope 
+Arguments rhs {idomain}%type_scope {H} {NameSet}%type_scope
   {Name}%type_scope {H0} r _ : assert.
 
-Arguments requires {idomain}%type_scope {H} {NameSet}%type_scope 
+Arguments requires {idomain}%type_scope {H} {NameSet}%type_scope
   {Name}%type_scope {H0} r _ _ : assert.
 
-Arguments ensures {idomain}%type_scope {H} {NameSet}%type_scope 
+Arguments ensures {idomain}%type_scope {H} {NameSet}%type_scope
   {Name}%type_scope {H0} r _ _ : assert.
 
-Arguments TransitionFromRuleInstance {idomain}%type_scope 
+Arguments TransitionFromRuleInstance {idomain}%type_scope
   {H} {NameSet}%type_scope {Name}%type_scope {H0} r v a b : assert.
 
-Arguments TransitionFromRule {idomain}%type_scope 
-  {H} {NameSet}%type_scope {Name}%type_scope {H0} r 
+Arguments TransitionFromRule {idomain}%type_scope
+  {H} {NameSet}%type_scope {Name}%type_scope {H0} r
   a b.
