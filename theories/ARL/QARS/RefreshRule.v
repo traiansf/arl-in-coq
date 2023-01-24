@@ -1,7 +1,7 @@
 From stdpp Require Import prelude.
 From Coq Require Import FunctionalExtensionality.
 From sets Require Import Ensemble.
-From ARS Require Import TransitionSystem RuleBasedTransitionSystem.
+From ARL Require Import TransitionSystem RuleBasedTransitionSystem.
 
 Definition find_position `{EqDecision A} (l : list A) (a : A) : option nat :=
   fst <$> list_find (fun x => x = a) l.
@@ -219,12 +219,12 @@ Lemma qterm_rename_vars_with_valuation p to_rename renaming v :
   p (valuationXchange_iter v to_rename renaming).
 Proof. done. Qed.
 
-Lemma ars_vars_eq_rename_iter vars1 vars2_list v1 v2 :
+Lemma arl_vars_eq_rename_iter vars1 vars2_list v1 v2 :
   length vars2_list = size vars1 ->
   NoDup vars2_list ->
   vars1 ## list_to_set vars2_list ->
-  ARSVarsEq NameSet (list_to_set vars2_list) v1 v2 ->
-  ARSVarsEq NameSet vars1
+  ARLVarsEq NameSet (list_to_set vars2_list) v1 v2 ->
+  ARLVarsEq NameSet vars1
     (valuationXchange_iter v1 (elements vars1) vars2_list)
     (valuationXchange_iter v2 (elements vars1) vars2_list).
 Proof.
@@ -258,7 +258,7 @@ Lemma pattern_dependent_vars_rename_pattern p vars1 vars2_list :
   pattern_dependent_vars NameSet (qpattern_rename_vars_with p (elements vars1) vars2_list) (list_to_set vars2_list).
 Proof.
   intros Hfve Hlen Hnodup2 Hdisj v1 v2 Heqvars.
-  by apply Hfve, ars_vars_eq_rename_iter.
+  by apply Hfve, arl_vars_eq_rename_iter.
 Qed.
 
 Lemma pattern_dependent_vars_rename_term (p : quantified_term) vars1 vars2_list :
@@ -269,7 +269,7 @@ Lemma pattern_dependent_vars_rename_term (p : quantified_term) vars1 vars2_list 
   pattern_dependent_vars NameSet (qterm_rename_vars_with p (elements vars1) vars2_list) (list_to_set vars2_list).
 Proof.
   intros Hfve Hlen Hnodup2 Hdisj v1 v2 Heqvars.
-  by apply Hfve, ars_vars_eq_rename_iter.
+  by apply Hfve, arl_vars_eq_rename_iter.
 Qed.
 
 Lemma qterm_rename_vars_with_valuation_rev (p : quantified_term) to_rename renaming :
@@ -318,8 +318,15 @@ Program Definition rewrite_rule_refresh_vars (r : RewriteRule NameSet) (avoid : 
     ensures := qpattern_rename_vars_with (ensures r) vars_list fresh_vars;
   |}.
 Next Obligation.
-  intros [] * ?; apply requires_predicate.
+  intros * x.
+  rewrite !elem_of_list_to_set; intro Hx.
+  apply elem_of_list_omap in Hx as (? & ? & ?).
+  by apply elem_of_list_lookup; eexists.
 Qed.
+Next Obligation.
+  intros * v1 v2 Heqvars.
+  apply lhs_vars.
+  specialize (arl_vars_eq_rename_iter (vars_lhs r) fresh_vars_lhs v1 v2).
 Next Obligation.
   intros [] * ?; apply ensures_predicate.
 Qed.

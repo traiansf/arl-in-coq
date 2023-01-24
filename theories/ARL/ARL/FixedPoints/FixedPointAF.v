@@ -1,7 +1,7 @@
 From stdpp Require Import prelude.
 From Coq Require Import ClassicalEpsilon.
 From sets Require Import Ensemble.
-From ARS Require Import Traces TransitionSystem CTL.
+From ARL Require Import Traces TransitionSystem CTL.
 
 Section sec_fix_points.
 

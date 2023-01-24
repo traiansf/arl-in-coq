@@ -1,6 +1,6 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
-From ARS.ARS Require Import TransitionSystem.
+From ARL.ARS Require Import TransitionSystem.
 
 Definition Valuation `{TransitionSystem} (Name : Type) : Type := Name -> idomain.
 
@@ -20,33 +20,33 @@ Definition quantified_term_to_pattern (t : quantified_term) : quantified_pattern
 
 #[global] Coercion quantified_term_to_pattern : quantified_term >-> quantified_pattern.
 
-Definition ars_predicate `(p : quantified_pattern) : Prop :=
+Definition arl_predicate `(p : quantified_pattern) : Prop :=
   forall v : Valuation Name, p v ≡ top idomain \/ p v ≡ ∅.
 
 Definition quantified_variable (x : Name) : quantified_term :=
   fun v => v x.
 
-Record ARSVarsEq (vars : NameSet) (v1 v2 : Valuation Name) :=
+Record ARLVarsEq (vars : NameSet) (v1 v2 : Valuation Name) :=
 {
-  ars_vars_eq : forall x, x ∈ vars -> v1 x = v2 x
+  arl_vars_eq : forall x, x ∈ vars -> v1 x = v2 x
 }.
 
-Lemma ARSVarsEqProper_subseteq : Proper ((⊆) --> (=) ==> (=) ==> (impl)) ARSVarsEq.
+Lemma ARLVarsEqProper_subseteq : Proper ((⊆) --> (=) ==> (=) ==> (impl)) ARLVarsEq.
 Proof.
   intros vars1 vars2 Hvars _v1 v1 -> _v2 v2 -> Hvars1.
   constructor; intros x Hx.
   by apply Hvars1, Hvars.
 Qed.
 
-#[global] Instance ARSVarsEqProper : Proper ((≡) --> (=) ==> (=) ==> (iff)) ARSVarsEq.
+#[global] Instance ARLVarsEqProper : Proper ((≡) --> (=) ==> (=) ==> (iff)) ARLVarsEq.
 Proof.
   intros vars1 vars2 Hvars _v1 v1 -> _v2 v2 ->.
   apply set_equiv_subseteq in Hvars as [].
-  by split; apply ARSVarsEqProper_subseteq.
+  by split; apply ARLVarsEqProper_subseteq.
 Qed.
 
 Definition pattern_dependent_vars (p : quantified_pattern) (dependent_vars : NameSet) : Prop :=
-  forall (v1 v2 : Valuation Name), ARSVarsEq dependent_vars v1 v2 -> p v1 ≡ p v2.
+  forall (v1 v2 : Valuation Name), ARLVarsEq dependent_vars v1 v2 -> p v1 ≡ p v2.
 
 Record RewriteRule : Type :=
 {
@@ -61,8 +61,8 @@ Record RewriteRule : Type :=
   rhs_vars : pattern_dependent_vars rhs vars;
   requires_vars : pattern_dependent_vars requires vars_lhs;
   ensures_vars : pattern_dependent_vars ensures vars;
-  requires_predicate : ars_predicate requires;
-  ensures_predicate : ars_predicate ensures;
+  requires_predicate : arl_predicate requires;
+  ensures_predicate : arl_predicate ensures;
 }.
 
 Record TransitionFromRuleInstance (r : RewriteRule) (v : Valuation Name) (a b : idomain) : Prop :=

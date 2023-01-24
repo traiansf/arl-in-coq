@@ -1,6 +1,6 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
-From ARS Require Import Traces TransitionSystem CTL.
+From ARL Require Import Traces TransitionSystem CTL.
 
 Class RuleOfConsequence
   `{TransitionSystem} (R : relation (Ensemble idomain)) :=

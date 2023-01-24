@@ -28,10 +28,6 @@ CoInductive trace (A : Type) : Type :=
 | Tnil : A -> trace A
 | Tcons : A -> trace A -> trace A.
 
-Ltac coinduction proof :=
-  cofix proof; intros; constructor;
-   [ clear proof | try (apply proof; clear proof) ].
-
 Arguments Tnil  {_} _ : assert.
 Arguments Tcons {_} _ _ : assert.
 

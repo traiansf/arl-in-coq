@@ -1,0 +1,6 @@
+(coq.theory
+ (name ARL)
+ (package coq-arl)
+ (synopsis "Coq formalization for abstract reachability logic"))
+
+(include_subdirs qualified)

@@ -1,7 +1,7 @@
 From stdpp Require Import prelude.
 From Coq Require Import ClassicalEpsilon.
 From sets Require Import Ensemble.
-From ARS.Lib Require Import Traces.
+From ARL.Lib Require Import Traces.
 
 
 Class TransitionSystem (idomain : Type) := transition : relation idomain.

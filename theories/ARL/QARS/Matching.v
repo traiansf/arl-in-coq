@@ -1,7 +1,7 @@
 From stdpp Require Import prelude.
 From Coq Require Import FunctionalExtensionality.
 From sets Require Import Ensemble.
-From ARS Require Import TransitionSystem RuleBasedTransitionSystem.
+From ARL Require Import TransitionSystem RuleBasedTransitionSystem.
 
 Definition substitution `{TransitionSystem} (Name : Type) : Type := Name -> quantified_term (Name := Name).
 

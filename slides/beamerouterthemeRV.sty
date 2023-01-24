@@ -1,0 +1,164 @@
+% This is the outer theme file of the RV theme.
+% Based on the outer theme file for the Feather theme.
+% Copyright (c) 2014 by Lilyana Vaskova Vankova <lilqna.v@gmail.com>
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You can find the GNU General Public License at <http://www.gnu.org/licenses/>.
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerouterthemeRV}[2014/04/08 v1.0.0 The RV Beamer Theme]
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+% load required packages
+
+\RequirePackage{tikz}
+\RequirePackage{calc}
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Theme options, definitions and templates.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+% options for the progress bar/circle
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+% the height of the header is 2.5 times the lineheight of the frame title
+
+               \newlength{\beamer@height}
+               \usebeamerfont{frametitle} %use the frame title font
+               \setlength{\beamer@height}{2.5\baselineskip}
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+% reset fonts
+
+               \reset@font
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+% beamer specific options
+
+               \mode<presentation> % refers to the first four modes (beamer,handout,second and trans). That is, to all modes except the article mode
+{
+               \setbeamerfont{frametitle}{family=\sffamily,series=\bfseries,size = \LARGE}
+               \ifbeamercolorempty[fg]{RV}
+   {
+               \setbeamercolor{RV}{use={structure,palette sidebar primary},fg=palette sidebar primary.fg,bg=structure.fg}
+    }
+
+\define@key{beamerframe}{final}[true]{\def\beamer@RV@final}
+
+% final page
+
+                  \defbeamertemplate{final page}{text}[1]
+   {
+        \begin{tikzpicture}[overlay, remember picture]
+                 \node [anchor=center] at (current page.center) {\includegraphics[height=1.75\paperheight]{RVgraphics/end-page}};
+                \node [anchor=south west] at (current page.south west) {\includegraphics[width=.15\paperwidth]{RVgraphics/rv-logo}};
+                 \node [anchor=center] at (current page.center) {\usebeamerfont{subtitle}\textcolor{black}{#1}};
+       \end{tikzpicture}
+   }
+
+               \setbeamertemplate{final page}
+   {
+   }
+
+                  \newcommand{\finalpage}[1]
+   {
+           \begin{frame}[plain,noframenumbering]
+                  \setbeamertemplate{final page}[text]{#1}
+                  \usebeamertemplate{final page}
+            \end{frame}
+   }
+%----------------------------------------------------------------------------------------------------------------------------------
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+ % headline
+
+               \setbeamertemplate{headline}
+   {\ifdefempty{\beamer@frametitle}{}{\ifdef{\beamer@RV@final}{}{
+        \begin{tikzpicture}[overlay, remember picture]
+
+                \coordinate (UL) at (0,-.375\beamer@height); %upper left corner of the slide
+                \coordinate (UR) at (\paperwidth,0); %upper right of the slide
+
+                \draw[draw=none,fill=RV.fg] (UL) rectangle ([shift={(3.5em,-2ex)}] UL); % background rectabgle
+                \node [anchor=north east] at ([shift={(-1em,-1em)}] UR) {\includegraphics[width=.15\paperwidth]{RVgraphics/rv-logo}};
+        \end{tikzpicture}
+   }}
+    }
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+% footline  
+
+               \setbeamertemplate{footline}
+    {\ifdefempty{\beamer@frametitle}{\addtocounter{framenumber}{-1}}{\ifdef{\beamer@RV@final}{\addtocounter{framenumber}{-1}\global\let\beamer@RV@final\undefined}{
+%        \begin{beamercolorbox}[wd=1.0\paperwidth,ht=1.25ex,dp=1ex,left]{headfoot}
+%                {\usebeamercolor[fg]{frametitle}\usebeamerfont{section in head/foot}\hspace*{3.5ex}
+%                \insertshortauthor\ |\ 
+%                \insertshorttitle
+%                \insertshortsubtitle
+%                 }
+%        \end{beamercolorbox}
+        \begin{tikzpicture}[overlay]
+                \coordinate (LR) at (\paperwidth,0); %lower right of the slide
+                \coordinate (pageNoPos) at ([shift={(-2em,3em)}] LR); % coordinate of the logo and the circ position
+                \usebeamercolor{RV}
+                \node[anchor=north east] (pageNo) at (pageNoPos) {\ifnumequal{\value{framenumber}}{0}{}{\usebeamercolor[fg]{normal text}$\insertframenumber / \inserttotalframenumber$}};
+                \draw[draw=none,fill=RV.fg] ([shift={(.25em,-.5ex)}] pageNoPos) rectangle ([shift={(2em,-2.5ex)}] pageNo.north east); % background rectabgle
+        \end{tikzpicture}
+      }}
+     }
+
+%----------------------------------------------------------------------------------------------------------------------------------
+  
+% frame title
+%        \end{minipage}
+%\addtobeamertemplate{frametitle}{\vskip0.5ex}{}
+
+                \setbeamertemplate{frametitle}
+    {\ifdef{\beamer@RV@final}{
+                  \setbeamertemplate{final page}[text]{\beamer@frametitle}
+                  \usebeamertemplate{final page}
+    }{\vskip0.5ex
+                {\begin{beamercolorbox}[wd=.88\textwidth]{frametitle}%
+                        \usebeamercolor[fg]{frametitle}\usebeamerfont{frametitle}\insertframetitle%
+                        \end{beamercolorbox}\par}
+                {\usebeamercolor[fg]{framesubtitle}\usebeamerfont{framesubtitle}\insertframesubtitle\par}
+    }}
+                \ifx\beamer@shownavsym\undefined % insert navigation symbols
+                \setbeamertemplate{navigation symbols}
+
+                \fi
+}
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+%----------------------------------------------------------------------------------------------------------------------------------
+
+%%setting the blocks
+
+                \setbeamertemplate{blocks}[rounded=false,shadow=false]
+                \setbeamerfont{block title}{family=\sffamily,series=\bfseries,size =\normalsize}
+                \setbeamercolor{block title}{fg=black, bg=white}
+                \setbeamercolor{block body}{parent=normal text, use=block title,bg=white}
+
+\mode<all>

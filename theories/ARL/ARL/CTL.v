@@ -1,6 +1,6 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
-From ARS Require Import Traces TransitionSystem.
+From ARL Require Import Traces TransitionSystem.
 
 Section sec_CTL_defs.
 

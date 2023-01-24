@@ -1,15 +1,15 @@
--Q theories/ARS ARS
+-Q theories/ARL ARL
 
 -arg -w -arg -future-coercion-class-field
 
-theories/ARS/Lib/Traces.v
+theories/ARL/Lib/Traces.v
 
-theories/ARS/ARS/TransitionSystem.v
-theories/ARS/ARS/CTL.v
-theories/ARS/ARS/FixedPoints/FixedPointAF.v
-theories/ARS/ARS/FixedPoints/FixedPointEF.v
-theories/ARS/ARS/Deduction/DeductionRules.v
-theories/ARS/ARS/Deduction/DeductionAF.v
-theories/ARS/ARS/Deduction/DeductionEF.v
-theories/ARS/QARS/RuleBasedTransitionSystem.v
-theories/ARS/QARS/RefreshRule.v
+theories/ARL/ARS/TransitionSystem.v
+theories/ARL/ARL/CTL.v
+theories/ARL/ARL/FixedPoints/FixedPointAF.v
+theories/ARL/ARL/FixedPoints/FixedPointEF.v
+theories/ARL/ARL/Deduction/DeductionRules.v
+theories/ARL/ARL/Deduction/DeductionAF.v
+theories/ARL/ARL/Deduction/DeductionEF.v
+theories/ARL/QARS/RuleBasedTransitionSystem.v
+theories/ARL/QARS/RefreshRule.v

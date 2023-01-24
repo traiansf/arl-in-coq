@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Traian Florin Șerbănuță (joint work with Virgil Șerbănuță)" />
+  <title>Towards Abstract Reachability Logic</title>
+  <style type="text/css">
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+    }
+    .hanging div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="https://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="https://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">Towards Abstract Reachability Logic</h1>
+  <p class="subtitle">a semantics-based approach</p>
+  <p class="author">
+Traian Florin Șerbănuță (joint work with Virgil Șerbănuță)
+  </p>
+  <p class="institute">
+Runtime Verification
+  </p>
+</div>
+<div class="slide" id="TOC">
+<ul>
+<li><a href="#motivation-for-this-research"
+id="toc-motivation-for-this-research">Motivation for this
+research</a></li>
+<li><a href="#results-so-far" id="toc-results-so-far">Results (so
+far)</a></li>
+<li><a href="#preliminaries" id="toc-preliminaries">Preliminaries</a>
+<ul>
+<li><a href="#reachability-logic"
+id="toc-reachability-logic">Reachability Logic</a></li>
+<li><a href="#reachability-logic-and-ctl"
+id="toc-reachability-logic-and-ctl">Reachability Logic and CTL</a></li>
+<li><a href="#reachability-logic-and-matching-logic"
+id="toc-reachability-logic-and-matching-logic">Reachability Logic and
+Matching Logic</a></li>
+<li><a href="#references" id="toc-references">References</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="motivation-for-this-research" class="slide section level2">
+<h1>Motivation for this research</h1>
+<ul>
+<li>Algorithm for Reachability Logic Deduction for K
+<ul>
+<li>with Virgil Șerbănuță and Xiaohong Chen</li>
+</ul></li>
+<li>Idea to replace circular coinduction with regular induction
+<ul>
+<li>to allow proving total correctness</li>
+</ul></li>
+<li>I like formalizing mathematics with interactive provers
+<ul>
+<li>I don’t trust my math technical skills anymore</li>
+</ul></li>
+<li>Fomalizing semantical notions is (a bit) easier</li>
+</ul>
+</div>
+<div id="results-so-far" class="slide section level2">
+<h1>Results (so far)</h1>
+<ul>
+<li>Formalization of transition systems and traces</li>
+<li>EF (exists finally) and AF (always finally) as fixpoints</li>
+<li>A (semantics) deduction system for the intersection between CTL and
+Reachability Logic</li>
+<li>Initial work on incorporating quantification</li>
+</ul>
+</div>
+<div id="preliminaries" class="title-slide slide section level1">
+<h1>Preliminaries</h1>
+
+</div>
+<div id="reachability-logic" class="slide section level2">
+<h1>Reachability Logic</h1>
+<ul>
+<li>Program verification logic for K <span class="citation">(Rosu,
+Ellison, and Schulte 2010)</span></li>
+<li>Derives statements of the form <span
+class="math inline"><em>φ</em> ⇒ <em>ψ</em></span></li>
+<li>Two flavors: one-path and all-paths</li>
+</ul>
+<h3 id="one-path-reachability-logic-rl-one-path">One-path Reachability
+Logic <span class="citation">(Rosu et al. 2013)</span></h3>
+<p>Whenever starting in a configuration matching <span
+class="math inline"><em>φ</em></span> there is always an execution path
+leading to a configuration matching <span
+class="math inline"><em>ψ</em></span></p>
+<h3 id="all-paths-reachability-logic-rl-all-paths">All-paths
+Reachability Logic <span class="citation">(Stefanescu et al.
+2019)</span></h3>
+<p>A configuration matching <span class="math inline"><em>ψ</em></span>
+will be reached on any execution path starting in a configuration
+matching <span class="math inline"><em>φ</em></span>.</p>
+</div>
+<div id="reachability-logic-and-ctl" class="slide section level2">
+<h1>Reachability Logic and CTL</h1>
+<h3 id="resemblance">Resemblance</h3>
+<ul>
+<li>one-path reachability formula: <span
+class="math inline"><em>φ</em> ⟹ EF <em>ψ</em></span></li>
+<li>all-paths reachability formula: <span
+class="math inline"><em>φ</em> ⟹ AF <em>ψ</em></span></li>
+</ul>
+<h3 id="difference">Difference</h3>
+<ul>
+<li>CTL is richer?</li>
+<li>Reachability formulae have structure and free variables</li>
+</ul>
+</div>
+<div id="reachability-logic-and-matching-logic"
+class="slide section level2">
+<h1>Reachability Logic and Matching Logic</h1>
+<h3 id="expressivity-problem">Expressivity problem</h3>
+<ul>
+<li>Reachability formulae have structure and constraints</li>
+</ul>
+<h3 id="solution-enter-matching-logic">Solution: Enter Matching
+Logic</h3>
+<ul>
+<li>A logic mixing patterns and constraints</li>
+<li>Specifically designed to express matching for K</li>
+<li>Fixed-point operators (<span class="math inline"><em>μ</em></span>,
+<span class="math inline"><em>ν</em></span>) introduced to capture
+reachability</li>
+<li>Formulae interpreted as sets</li>
+</ul>
+</div>
+<div id="references" class="slide section level2 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-rl-original" class="csl-entry">
+Rosu, Grigore, Chucky Ellison, and Wolfram Schulte. 2010.
+<span>“Matching Logic: An Alternative to Hoare/Floyd Logic.”</span> In
+<em>AMAST’10</em>, edited by Michael Johnson and Dusko Pavlovic,
+6486:142–62. LNCS. Springer. <a
+href="https://doi.org/10.1007/978-3-642-17796-5\_9">https://doi.org/10.1007/978-3-642-17796-5\_9</a>.
+</div>
+<div id="ref-rl-one-path" class="csl-entry">
+Rosu, Grigore, Andrei Stefanescu, Ştefan Ciobâcă, and Brandon M. Moore.
+2013. <span>“One-Path Reachability Logic.”</span> In <em>LICS’13</em>,
+358–67. <span>IEEE</span> Computer Society. <a
+href="https://doi.org/10.1109/LICS.2013.42">https://doi.org/10.1109/LICS.2013.42</a>.
+</div>
+<div id="ref-rl-all-paths" class="csl-entry">
+Stefanescu, Andrei, Ştefan Ciobâcă, Radu Mereuta, Brandon M. Moore,
+Traian-Florin Serbanuta, and Grigore Rosu. 2019. <span>“All-Path
+Reachability Logic.”</span> <em>Log. Methods Comput. Sci.</em> 15 (2).
+<a
+href="https://doi.org/10.23638/LMCS-15(2:5)2019">https://doi.org/10.23638/LMCS-15(2:5)2019</a>.
+</div>
+</div>
+</div>
+</body>
+</html>

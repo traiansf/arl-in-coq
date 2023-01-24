@@ -1,7 +1,7 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
-From ARS Require Import Traces TransitionSystem CTL.
-From ARS Require Import DeductionRules.
+From ARL Require Import Traces TransitionSystem CTL.
+From ARL Require Import DeductionRules.
 
 Section sec_transition_system_deduction_rules.
 

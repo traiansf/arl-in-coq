@@ -2,16 +2,19 @@ opam-version: "2.0"
 maintainer: "traian.serbanuta@gmail.com"
 version: "dev"
 
-homepage: "https://github.com/traiansf/coq-ars"
-dev-repo: "git+https://github.com/traiansf/coq-ars.git"
-bug-reports: "https://github.com/traiansf/coq-ars/issues"
+homepage: "https://github.com/traiansf/coq-arl"
+dev-repo: "git+https://github.com/traiansf/coq-arl.git"
+bug-reports: "https://github.com/traiansf/coq-arl/issues"
 license: "MIT"
 
-synopsis: "Coq formalization of Abstract Rewrite Systems"
+synopsis: "Coq formalization of Abstract Reachability Logic"
 description: """
-Formalization of Abstract Rewrite Systems together with a notion of
+Formalization of Abstract Reachability Logic, containing a formalization
+of abstract transition systems together with a notion of
 CTL-like always-finally reachability claims and an abstract deduction system
-which can be used to derive such claims."""
+which can be used to derive such claims.
+The formalization is next extended to handle (abstract) quantification.
+"""
 
 build: ["dune" "build" "-p" name "-j" jobs]
 depends: [

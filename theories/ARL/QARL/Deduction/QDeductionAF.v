@@ -1,7 +1,7 @@
 From stdpp Require Import prelude.
 From sets Require Import Ensemble.
-From ARS Require Import TransitionSystem CTL RuleBasedTransitionSystem.
-From ARS Require Import DeductionRules DeductionAF DeductionEF.
+From ARL Require Import TransitionSystem CTL RuleBasedTransitionSystem.
+From ARL Require Import DeductionRules DeductionAF DeductionEF.
 
 Record QuantifiedClaim `{TransitionSystem} {claim_quant : Type} := mk_qclaim
 {
