@@ -2,6 +2,7 @@
 
 -arg -w -arg -future-coercion-class-field
 
+theories/ARL/Lib/FreshExtras.v
 theories/ARL/Lib/Traces.v
 
 theories/ARL/ARS/TransitionSystem.v

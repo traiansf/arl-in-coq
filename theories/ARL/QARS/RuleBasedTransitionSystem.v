@@ -38,7 +38,7 @@ Proof.
   by apply Hvars1, Hvars.
 Qed.
 
-#[global] Instance ARLVarsEqProper : Proper ((≡) --> (=) ==> (=) ==> (iff)) ARLVarsEq.
+#[global] Instance ARLVarsEqProper : Proper ((≡) ==> (=) ==> (=) ==> (iff)) ARLVarsEq.
 Proof.
   intros vars1 vars2 Hvars _v1 v1 -> _v2 v2 ->.
   apply set_equiv_subseteq in Hvars as [].
@@ -47,6 +47,21 @@ Qed.
 
 Definition pattern_dependent_vars (p : quantified_pattern) (dependent_vars : NameSet) : Prop :=
   forall (v1 v2 : Valuation Name), ARLVarsEq dependent_vars v1 v2 -> p v1 ≡ p v2.
+
+Lemma pattern_dependent_varsProper_subseteq : Proper ((=) ==> (⊆) ==> (impl)) pattern_dependent_vars.
+Proof.
+  intros _p p -> vars1 vars2 Hvars Hvars1 v1 v2 Hvars2.
+  apply Hvars1.
+  revert Hvars2.
+  by apply ARLVarsEqProper_subseteq.
+Qed.
+
+#[global] Instance pattern_dependent_varsProper : Proper ((=) ==> (≡) ==> (iff)) pattern_dependent_vars.
+Proof.
+  intros _p p -> vars1 vars2 Hequiv.
+  apply set_equiv_subseteq in Hequiv as [].
+  by split; apply pattern_dependent_varsProper_subseteq.
+Qed.
 
 Record RewriteRule : Type :=
 {
