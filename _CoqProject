@@ -4,6 +4,7 @@
 
 theories/ARL/Lib/FreshExtras.v
 theories/ARL/Lib/Traces.v
+theories/ARL/Lib/Lists.v
 
 theories/ARL/ARS/TransitionSystem.v
 theories/ARL/ARL/CTL.v
@@ -14,3 +15,4 @@ theories/ARL/ARL/Deduction/DeductionAF.v
 theories/ARL/ARL/Deduction/DeductionEF.v
 theories/ARL/QARS/RuleBasedTransitionSystem.v
 theories/ARL/QARS/RefreshRule.v
+theories/ARL/QARS/Matching.v

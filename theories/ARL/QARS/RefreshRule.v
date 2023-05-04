@@ -226,59 +226,60 @@ Proof.
   by intros; rewrite valuationXchange_iter_twice.
 Qed.
 
+Definition constrained_term_structure_rename_vars_with
+  (ct : ConstrainedTermStructure NameSet) (subst : list (Name * Name))
+  : ConstrainedTermStructure NameSet :=
+  let subst_vars := filter (fun xy => xy.1 ∈ ct_vars ct) subst in
+  {|
+    ct_vars := list_to_set (map snd subst_vars) ;
+    ct_term := qterm_rename_vars_with (ct_term ct) subst ;
+    ct_constraint := qpattern_rename_vars_with (ct_constraint ct) subst ;
+  |}.
+
 Context
   `{Infinite Name}.
 
+Lemma constrained_term_props_rename_vars_with
+  (ct : ConstrainedTermStructure NameSet) 
+  (avoid : NameSet) :
+  forall vars (subst := refresh_list vars avoid),
+  ct_vars ct ⊆ vars ->
+  ConstrainedTermProps NameSet ct -> 
+  ConstrainedTermProps NameSet
+    (constrained_term_structure_rename_vars_with ct subst).
+Proof.
+  intros vars subst Hincl Hct; subst subst.
+  constructor; cbn.
+  - apply pattern_dependent_vars_rename_term_sub;
+      [by apply refresh_list_nodup | by apply Hct |..].
+    by rewrite refresh_list_fst, list_to_set_elements.
+  - apply pattern_dependent_vars_rename_pattern_sub;
+      [by apply refresh_list_nodup | by apply Hct |..].
+    by rewrite refresh_list_fst, list_to_set_elements.
+  - by intro; apply Hct.
+Qed.
+
+Definition rewrite_rule_structure_rename_vars_with
+  (r : RewriteRuleStructure NameSet) (subst : list (Name * Name))
+  : RewriteRuleStructure NameSet :=
+  {|
+    clhs := constrained_term_structure_rename_vars_with (clhs r) subst;
+    crhs := constrained_term_structure_rename_vars_with (crhs r) subst;
+  |}.
+
 Program Definition rewrite_rule_refresh_vars (r : RewriteRule NameSet) (avoid : NameSet) : RewriteRule NameSet :=
   let subst := refresh_list (vars r) avoid in
-  let subst_lhs := filter (fun xy => xy.1 ∈ vars_lhs r) subst in
   {|
-    vars := list_to_set (map snd subst) ;
-    vars_lhs := list_to_set (map snd subst_lhs) ;
-    lhs := qterm_rename_vars_with (lhs r) subst ;
-    requires := qpattern_rename_vars_with (requires r) subst ;
-    rhs := qterm_rename_vars_with (rhs r) subst ;
-    ensures := qpattern_rename_vars_with (ensures r) subst ;
+    rule := rewrite_rule_structure_rename_vars_with (rule r) subst;
   |}.
 Next Obligation.
-  cbn; intros r avoid y; rewrite !elem_of_list_to_set, !elem_of_list_fmap.
-  intros (xy & -> & Hxy).
-  apply elem_of_list_filter in Hxy as [].
-  by eexists.
-Qed.
-Next Obligation.
-  intros.
-  apply pattern_dependent_vars_rename_term_sub;
-    [by apply refresh_list_nodup | by apply lhs_vars |].
-  subst subst; rewrite refresh_list_fst, list_to_set_elements.
-  by apply vars_lhs_prop.
-Qed.
-Next Obligation.
-  intros.
-  apply pattern_dependent_vars_rename_term;
-    [by apply refresh_list_nodup |].
-  subst subst; rewrite refresh_list_fst, list_to_set_elements.
-  by apply rhs_vars.
-Qed.
-Next Obligation.
-  intros.
-  apply pattern_dependent_vars_rename_pattern_sub;
-    [by apply refresh_list_nodup | by apply requires_vars |].
-  subst subst; rewrite refresh_list_fst, list_to_set_elements.
-  by apply vars_lhs_prop.
-Qed.
-Next Obligation.
-  intros.
-  apply pattern_dependent_vars_rename_pattern;
-    [by apply refresh_list_nodup |].
-  subst subst; rewrite refresh_list_fst, list_to_set_elements.
-  by apply ensures_vars.
-Qed.
-Next Obligation.
-  by intros; intro; apply requires_predicate.
-Qed.
-Next Obligation.
-  by intros; intro; apply ensures_predicate.
+  constructor.
+  - by apply constrained_term_props_rename_vars_with; apply r.
+  - by apply constrained_term_props_rename_vars_with, r.
+  - cbn; intro y; rewrite !elem_of_list_to_set, !elem_of_list_fmap.
+    setoid_rewrite elem_of_list_filter.
+    intros (xy & -> & Hx & Hxy).
+    by eexists; split_and!; [| apply r |].
 Qed.
 
 Lemma rewrite_rule_refresh_vars_disj r avoid :
@@ -324,7 +325,7 @@ Qed.
   TransitionFromRuleInstance r (valuationXchange_iter v subst) a b.
 Proof. by intros []; constructor. Qed.
 
-Lemma TransitionFromRule_refresh_vars r avoid :
+Lemma TransitionFromRule_refresh_vars (r : RewriteRule NameSet) avoid :
   forall a b, TransitionFromRule r a b <->
     TransitionFromRule (rewrite_rule_refresh_vars r avoid) a b.
 Proof.

@@ -45,6 +45,11 @@ Proof.
   by split; apply ARLVarsEqProper_subseteq.
 Qed.
 
+(** We say that a set of variables <<dependent_vars>> contains all the variables
+that a pattern <<p>> depends on if for any two valuations which are
+equal on <<dependent_vars>>, the valuations of the pattern using the two
+valuations are equal.
+*)
 Definition pattern_dependent_vars (p : quantified_pattern) (dependent_vars : NameSet) : Prop :=
   forall (v1 v2 : Valuation Name), ARLVarsEq dependent_vars v1 v2 -> p v1 ≡ p v2.
 
@@ -63,24 +68,53 @@ Proof.
   by split; apply pattern_dependent_varsProper_subseteq.
 Qed.
 
-Record RewriteRule : Type :=
+Record ConstrainedTermStructure : Type :=
 {
-  lhs : quantified_term;
-  requires : quantified_pattern;
-  rhs : quantified_term;
-  ensures : quantified_pattern;
-  vars : NameSet;
-  vars_lhs : NameSet;
-  vars_lhs_prop : vars_lhs ⊆ vars;
-  lhs_vars : pattern_dependent_vars lhs vars_lhs;
-  rhs_vars : pattern_dependent_vars rhs vars;
-  requires_vars : pattern_dependent_vars requires vars_lhs;
-  ensures_vars : pattern_dependent_vars ensures vars;
-  requires_predicate : arl_predicate requires;
-  ensures_predicate : arl_predicate ensures;
+  ct_vars : NameSet;
+  ct_term : quantified_term;
+  ct_constraint : quantified_pattern;
 }.
 
-Record TransitionFromRuleInstance (r : RewriteRule) (v : Valuation Name) (a b : idomain) : Prop :=
+Record ConstrainedTermProps (ct : ConstrainedTermStructure) : Prop :=
+{
+  ct_term_vars : pattern_dependent_vars (ct_term ct) (ct_vars ct);
+  ct_constraint_vars : pattern_dependent_vars (ct_constraint ct) (ct_vars ct);
+  ct_constraint_predicate : arl_predicate (ct_constraint ct);
+}.
+
+Record ConstrainedTerm : Type :=
+{
+  ct :> ConstrainedTermStructure;
+  ct_props : ConstrainedTermProps ct;
+}.
+
+Record RewriteRuleStructure : Type :=
+{
+  clhs : ConstrainedTermStructure;
+  crhs : ConstrainedTermStructure;
+}.
+
+Record RewriteRuleProps (r : RewriteRuleStructure) : Prop :=
+{
+  lhs_props : ConstrainedTermProps (clhs r);
+  rhs_props : ConstrainedTermProps (crhs r);
+  vars_lhs_prop : ct_vars (clhs r) ⊆ ct_vars (crhs r);
+}.
+
+Record RewriteRule : Type :=
+{
+  rule :> RewriteRuleStructure;
+  rule_props : RewriteRuleProps rule;
+}.
+
+Definition lhs (r : RewriteRuleStructure) : quantified_term := ct_term (clhs r).
+Definition rhs (r : RewriteRuleStructure) : quantified_term := ct_term (crhs r).
+Definition requires (r : RewriteRuleStructure) : quantified_pattern := ct_constraint (clhs r).
+Definition ensures (r : RewriteRuleStructure) : quantified_pattern := ct_constraint (crhs r).
+Definition vars (r : RewriteRuleStructure) : NameSet := ct_vars (crhs r).
+Definition vars_lhs (r : RewriteRuleStructure) : NameSet := ct_vars (clhs r).
+
+Record TransitionFromRuleInstance (r : RewriteRuleStructure) (v : Valuation Name) (a b : idomain) : Prop :=
 {
   a_is_lhs : a = lhs r v;
   b_is_rhs : b = rhs r v;
@@ -88,18 +122,18 @@ Record TransitionFromRuleInstance (r : RewriteRule) (v : Valuation Name) (a b : 
   ensure_holds : b ∈ ensures r v;
 }.
 
-Definition transition_closed_to_rule_instance (r : RewriteRule) (v : Valuation Name) : Prop :=
+Definition transition_closed_to_rule_instance (r : RewriteRuleStructure) (v : Valuation Name) : Prop :=
   forall a b, TransitionFromRuleInstance r v a b -> transition a b.
 
-Inductive TransitionFromRule (r : RewriteRule) (a b : idomain) : Prop :=
+Inductive TransitionFromRule (r : RewriteRuleStructure) (a b : idomain) : Prop :=
 | tfr : forall v : Valuation Name, TransitionFromRuleInstance r v a b ->
   TransitionFromRule r a b.
 
-Definition transition_rule_consistency (r : RewriteRule) : Prop :=
+Definition transition_rule_consistency (r : RewriteRuleStructure) : Prop :=
   forall v, lhs r v ∈ requires r v ->
     exists b, TransitionFromRule r (lhs r v) b.
 
-Definition transition_closed_to_rule (r : RewriteRule) : Prop :=
+Definition transition_closed_to_rule (r : RewriteRuleStructure) : Prop :=
   forall a b, TransitionFromRule r a b -> transition a b.
 
 Context
@@ -123,32 +157,51 @@ Class RuleBasedTransitionSystem
 {
   rules_sound : transition_closed_to_rule_set NameSet rs;
   rules_complete : transition_included_in_rule_set NameSet rs;
-  rules_consistent : set_Forall (transition_rule_consistency NameSet) rs;
+  rules_consistent :
+    set_Forall (fun r : RewriteRule NameSet => transition_rule_consistency NameSet r) rs;
 }.
 
 #[global] Hint Mode RuleBasedTransitionSystem - - - - - - - - - - - - - - - - - - - - - ! : typeclass_instances.
 
-Arguments vars {idomain}%type_scope {H} {NameSet}%type_scope
-  {Name}%type_scope {H0} r : assert.
+Arguments ct_vars {idomain}%type_scope {H} {NameSet}%type_scope
+  {Name}%type_scope c : assert.
 
-Arguments vars_lhs {idomain}%type_scope {H} {NameSet}%type_scope
-  {Name}%type_scope {H0} r : assert.
+Arguments ct_term {idomain}%type_scope {H} {NameSet}%type_scope
+  {Name}%type_scope c _ : assert.
 
-Arguments lhs {idomain}%type_scope {H} {NameSet}%type_scope
-  {Name}%type_scope {H0} r _ : assert.
-
-Arguments rhs {idomain}%type_scope {H} {NameSet}%type_scope
-  {Name}%type_scope {H0} r _ : assert.
-
-Arguments requires {idomain}%type_scope {H} {NameSet}%type_scope
-  {Name}%type_scope {H0} r _ _ : assert.
-
-Arguments ensures {idomain}%type_scope {H} {NameSet}%type_scope
-  {Name}%type_scope {H0} r _ _ : assert.
+Arguments ct_constraint {idomain}%type_scope {H} {NameSet}%type_scope
+  {Name}%type_scope c _ _ : assert.
 
 Arguments TransitionFromRuleInstance {idomain}%type_scope
-  {H} {NameSet}%type_scope {Name}%type_scope {H0} r v a b : assert.
+  {H} {NameSet}%type_scope {Name}%type_scope r v a b : assert.
 
 Arguments TransitionFromRule {idomain}%type_scope
-  {H} {NameSet}%type_scope {Name}%type_scope {H0} r
+  {H} {NameSet}%type_scope {Name}%type_scope r
   a b.
+
+Arguments vars {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments vars_lhs {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments lhs {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments rhs {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments requires {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments ensures {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments clhs {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments crhs {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope r.
+
+Arguments rule {idomain}%type_scope {H} {NameSet}%type_scope 
+  {Name}%type_scope {H0} r.
